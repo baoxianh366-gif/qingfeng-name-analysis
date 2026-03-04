@@ -17,7 +17,7 @@ import os
 import json
 import io
 import subprocess
-from weasyprint import HTML, CSS
+# from weasyprint import HTML, CSS  # 暂时禁用
 
 # ==================== 页面配置 ====================
 st.set_page_config(
