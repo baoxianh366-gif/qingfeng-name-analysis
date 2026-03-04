@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+清风道长·生肖姓名学分析系统
+官方网站：https://qingfeng-name.com
+
+【隐私保护声明】
+本网站所有示例数据均为虚构或历史名人，仅用于演示目的。
+不收集、不存储任何真实用户个人信息。
+所有分析结果仅供娱乐和文化研究参考。
+"""
+
+import streamlit as st
+from datetime import datetime, timedelta
+import pandas as pd
+import os
+import json
+import io
+import subprocess
+from weasyprint import HTML, CSS
+
+# ==================== 页面配置 ====================
+st.set_page_config(
+    page_title="清风道长·生肖姓名学分析系统",
+    page_icon="🔮",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ==================== 工具函数 ====================
+
+def get_zodiac(year):
+    """根据出生年份计算生肖"""
+    zodiacs = ['猴', '鸡', '狗', '猪', '鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊']
+    return zodiacs[year % 12]
+
+def get_zodiac_element(year):
+    """根据出生年份计算五行"""
+    elements = ['金', '金', '水', '水', '木', '木', '火', '火', '土', '土']
+    return elements[year % 10]
+
+def analyze_name(name, zodiac):
+    """姓名分析核心算法"""
+    # 这里简化处理，实际应该调用完整的分析技能
+    analysis = {
+        'score': 85,
+        'rating': '吉名',
+        'strengths': ['字根吉祥', '五行相生', '寓意美好'],
+        'weaknesses': ['得食略弱'],
+        'suggestions': ['建议多用小名化解', '可佩戴金属饰品补金']
+    }
+    return analysis
+
+def generate_pdf_report(customer_info, analysis_result):
+    """生成 PDF 分析报告（中文）- 使用 md2pdf"""
+    # 创建 Markdown 内容
+    md_content = f"""# 姓名分析报告
+
+## 基本信息
+
+| 项目 | 内容 |
+|------|------|
+| 姓名 | {customer_info['name']} |
+| 性别 | {customer_info['gender']} |
+| 生肖 | {customer_info['zodiac']} |
+| 分析日期 | {datetime.now().strftime('%Y-%m-%d')} |
+
+## 分析结果
+
+**综合评分**：{analysis_result['score']}分  
+**评级**：{analysis_result['rating']}
+
+### 优点
+"""
+    for s in analysis_result['strengths']:
+        md_content += f"- ✅ {s}
+"
+    
+    md_content += """
+### 缺点
+"""
+    for w in analysis_result['weaknesses']:
+        md_content += f"- ⚠️ {w}
+"
+    
+    md_content += """
+### 建议
+"""
+    for sug in analysis_result['suggestions']:
+        md_content += f"- 💡 {sug}
+"
+    
+    md_content += """
+---
+🙏 清风道长·生肖姓名学分析系统
+"""
+    
+    # 生成 PDF
+    buffer = io.BytesIO()
+    md2pdf(buffer, md_content)
+    buffer.seek(0)
+    return buffer
+
+# ==================== 侧边栏 ====================
+st.sidebar.title("🔮 清风道长")
+st.sidebar.image("https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=微信支付示例", caption="微信支付")
+st.sidebar.markdown("""
+### 📋 服务套餐（示例）
+- **免费体验**：0 元
+- **详细分析**：99 元
+- **小名推荐**：69 元
+- **取名建议**：199 元
+- **高端定制**：999 元
+
+> ⚠️ 注：本网站为演示系统，所有数据均为虚构示例
+""")
+
+st.sidebar.markdown("---")
+st.sidebar.info("🙏 道长寄语：姓名伴随一生，好名助运一生")
+
+# ==================== 主页面 ====================
+st.title("🔮 清风道长·生肖姓名学分析系统")
+st.markdown("### 陈安茂派正统理论 · AI 自动化分析")
+
+# 选项卡
+tab1, tab2, tab3, tab4 = st.tabs(["📝 姓名分析", "👶 取名建议", "📊 我的订单", "🙋 联系我们"])
+
+with tab1:
+    st.header("📝 姓名分析")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        name = st.text_input("姓名", "李白")
+        gender = st.selectbox("性别", ["女", "男"])
+        
+    with col2:
+        birth_date = st.date_input("出生日期", datetime(701, 2, 28))
+        birth_place = st.text_input("出生地", "碎叶城（唐代）")
+    
+    # 计算生肖
+    zodiac = get_zodiac(birth_date.year)
+    element = get_zodiac_element(birth_date.year)
+    
+    st.info(f"🐴 生肖：{zodiac}（{element}）")
+    
+    if st.button("🔮 开始分析", type="primary", use_container_width=True):
+        with st.spinner("正在分析中..."):
+            # 调用分析算法
+            analysis_result = analyze_name(name, zodiac)
+            
+            st.success("✅ 分析完成！")
+            
+            # 显示结果
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("综合评分", f"{analysis_result['score']}分")
+            with col2:
+                st.metric("评级", analysis_result['rating'])
+            with col3:
+                st.metric("生肖", zodiac)
+            
+            # 详细分析
+            st.subheader("📊 详细分析")
+            
+            st.markdown(f"""
+            **优点**：
+            {''.join([f'✅ {s}  ' for s in analysis_result['strengths']])}
+            
+            **缺点**：
+            {''.join([f'⚠️ {w}  ' for w in analysis_result['weaknesses']])}
+            
+            **建议**：
+            {''.join([f'💡 {s}  ' for s in analysis_result['suggestions']])}
+            """)
+            
+            # 下载 PDF
+            customer_info = {
+                'name': name,
+                'gender': gender,
+                'zodiac': zodiac,
+                'birth_date': str(birth_date)
+            }
+            
+            # PDF 功能维护中，暂时禁用
+        st.warning("🚧 PDF 报告功能维护中，请稍后重试")
+        pdf_buffer = None
+            
+            st.download_button(
+                label="📥 下载 PDF 报告",
+                data=pdf_buffer,
+                file_name=f"{name}_姓名分析报告.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+            
+            # 付费提示
+            st.warning("💰 完整版报告（含 15 个小名推荐 + 五行补救建议）仅需 99 元，请扫码支付")
+
+with tab2:
+    st.header("👶 取名建议")
+    st.info("🚧 功能开发中，敬请期待...")
+
+with tab3:
+    st.header("📊 我的订单")
+    st.info("🚧 功能开发中，敬请期待...")
+
+with tab4:
+    st.header("🙋 联系我们")
+    
+    st.markdown("""
+    ### 📱 联系方式
+    
+    - **微信**：qingfeng_daotong（示例）
+    - **小红书**：@清风道长（示例）
+    - **服务时间**：9:00-22:00
+    
+    ### 🔒 隐私保护声明
+    
+    本网站严格遵守隐私保护原则：
+    - 不收集、不存储任何真实用户个人信息
+    - 所有示例数据均为虚构或历史名人
+    - 分析结果仅供娱乐和文化研究参考
+    - 如需正式服务，请通过官方渠道联系
+    
+    ### 💬 常见问题
+    
+    **Q：多久出报告？**
+    A：24 小时内交付 PDF 报告
+    
+    **Q：可以退款吗？**
+    A：报告交付前可全额退款
+    
+    **Q：有售后服务吗？**
+    A：7 天内免费答疑，30 天内免费复测 1 次
+    """)
+
+# ==================== 页脚 ====================
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: gray;'>
+    <p>🙏 清风道长·生肖姓名学分析系统</p>
+    <p>🔒 隐私保护声明：本网站所有示例数据均为虚构或历史名人，仅用于演示目的</p>
+    <p>不收集、不存储任何真实用户个人信息</p>
+    <p>© 2026 All Rights Reserved</p>
+</div>
+""", unsafe_allow_html=True)
